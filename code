@@ -1,0 +1,142 @@
+CREATE TABLE SALES (
+    SALE_ID NUMBER PRIMARY KEY, 
+    PRODUCT_ID NUMBER, 
+    QUANTITY_SOLD NUMBER, 
+    SALE_DATE DATE, 
+    TOTAL_PRICE NUMBER(10,2)
+);
+
+
+
+INSERT INTO SALES (SALE_ID, PRODUCT_ID, QUANTITY_SOLD, SALE_DATE, TOTAL_PRICE) 
+VALUES (1, 101, 5, TO_DATE('2024-01-01', 'YYYY-MM-DD'), 2500.00);
+
+INSERT INTO SALES (SALE_ID, PRODUCT_ID, QUANTITY_SOLD, SALE_DATE, TOTAL_PRICE) 
+VALUES (2, 102, 3, TO_DATE('2024-01-02', 'YYYY-MM-DD'), 900.00);
+
+INSERT INTO SALES (SALE_ID, PRODUCT_ID, QUANTITY_SOLD, SALE_DATE, TOTAL_PRICE) 
+VALUES (3, 103, 2, TO_DATE('2024-01-02', 'YYYY-MM-DD'), 60.00);
+
+INSERT INTO SALES (SALE_ID, PRODUCT_ID, QUANTITY_SOLD, SALE_DATE, TOTAL_PRICE) 
+VALUES (4, 104, 4, TO_DATE('2024-01-03', 'YYYY-MM-DD'), 80.00);
+
+INSERT INTO SALES (SALE_ID, PRODUCT_ID, QUANTITY_SOLD, SALE_DATE, TOTAL_PRICE) 
+VALUES (5, 105, 6, TO_DATE('2024-01-03', 'YYYY-MM-DD'), 90.00);
+
+CREATE table PRODUCTS(
+ product_id number PRIMARY KEY,
+    product_name VARCHAR2(100),
+    category VARCHAR2(50),
+    unit_price NUMBER(10, 2)
+);
+INSERT INTO PRODUCTS (product_id, product_name, category, unit_price) 
+VALUES (101, 'laptop', 'electronics', 500.00);
+
+INSERT INTO PRODUCTS (product_id, product_name, category, unit_price) 
+VALUES (102, 'smartphone', 'electronics', 300.00);
+
+INSERT INTO PRODUCTS (product_id, product_name, category, unit_price) 
+VALUES (103, 'headphones', 'electronics', 30.00);
+
+INSERT INTO PRODUCTS (product_id, product_name, category, unit_price) 
+VALUES (104, 'keyboard', 'electronics', 20.00);
+
+INSERT INTO PRODUCTS (product_id, product_name, category, unit_price) 
+VALUES (105, 'mouse', 'electronics', 15.00);
+
+select * from sales;
+
+select * from products;
+
+select product_name from PRODUCTS
+where PRODUCT_ID=(SELECT product_id from sales WHERE total_price=(select max(total_price)from sales) );
+
+select DISTINCT category
+from PRODUCTS
+where PRODUCT_ID in(select DISTINCT PRODUCT_ID from sales);
+
+
+select product_name from PRODUCTS
+where PRODUCT_ID= (select product_id from sales where QUANTITY_SOLD=(select max(QUANTITY_SOLD)from sales));
+
+select sale_id , (total_price/QUANTITY_SOLD) as avg_price_per_unit from sales;
+
+select product_name from PRODUCTS where PRODUCT_ID not in (select DISTINCT product_id from sales);
+
+select SALE_DATE , (select sum(total_price)from sales s where s.sale_date=sales.sale_date)as daily_sales_total
+from SALES
+GROUP by sale_date;
+
+select product_name ,
+(select sum(QUANTITY_SOLD) from sales where sales.PRODUCT_ID=products.product_id)as total_sold
+from PRODUCTS;
+
+select product_name,total_revenue
+from( select p.product_name,sum(s.total_price)as total_revenue from sales s join products p on s.product_id=p.PRODUCT_ID
+group by p.PRODUCT_NAME
+order by total_revenue desc)
+where ROWNUM=1;
+
+select* from sales where TOTAL_PRICE<(SELECT avg(total_price)from sales);
+
+select product_name from PRODUCTS where PRODUCT_ID not in (select DISTINCT PRODUCT_ID from sales);
+
+select sale_date , sum(total_price) as daily_sales
+from SALES
+GROUP by SALE_DATE
+HAVING sum(TOTAL_PRICE)>(select avg(total_price)from sales);
+
+select * from sales where (TOTAL_PRICE /QUANTITY_SOLD)>(SELECT avg(unit_price)from PRODUCTS);
+
+SELECT s.sale_id,s.sale_date,p.product_name,s.QUANTITY_SOLD,s.total_price from sales s 
+inner join PRODUCTS p on s.PRODUCT_ID=p.PRODUCT_ID;
+
+select p.product_name,s.sale_date,s.QUANTITY_SOLD,s.total_price
+from PRODUCTS p 
+left join sales s on p.PRODUCT_ID=s.PRODUCT_ID;
+
+select s.sale_date , s.QUANTITY_SOLD,s.total_price, p.product_name from sales s 
+right join PRODUCTS p on s.PRODUCT_ID=p.PRODUCT_ID;
+
+
+select p.product_name,s.sale_date,s.QUANTITY_SOLD,s.total_price
+from PRODUCTS p
+full outer join sales s on p.PRODUCT_ID=s.PRODUCT_ID;
+
+SELECT p.product_name,sum(s.total_price) as total_revenue
+from PRODUCTS p
+left join sales s on p.PRODUCT_ID=s.PRODUCT_ID
+GROUP by p.PRODUCT_NAME;
+
+select p.product_name,sum(s.QUANTITY_SOLD) as total_quantity from PRODUCTS p 
+join sales s on p.PRODUCT_ID=s.PRODUCT_ID
+group by p.PRODUCT_NAME
+order by total_quantity desc
+fetch first 1 rows only;
+
+select sale_date , sum(total_price) as total_sales from sales 
+group by sale_date 
+order by total_sales DESC
+fetch first 1 rows only;
+
+SELECT sale_date , sum(total_price) as daily_sales from sales 
+GROUP by sale_date 
+having sum (TOTAL_PRICE)>= all(select sum(total_price)from sales group by sale_date);
+
+
+select sale_id,sale_date,total_price from sales 
+where total_price > any (select sum (total_price)from sales GROUP by SALE_DATE);
+
+select sum(sales.total_price) as total_revenue from SALES
+join products on SALES.PRODUCT_ID=PRODUCTS.product_id
+where products .category='electronics';
+
+select product_id ,count(*) sales_count from SALES
+GROUP by PRODUCT_ID
+order by sales_count DESC
+ fetch first 1 row only;
+
+ select p.product_name from sales s
+ join products p on s.PRODUCT_ID = p.PRODUCT_ID
+ group by p.product_name 
+ having sum (s.TOTAL_PRICE)>30;
